@@ -1,0 +1,37 @@
+name: Operator 0
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  operate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Answer the call
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          for i in 1 2 3; do
+            python operator0.py && break || sleep 10
+          done
+
+      - name: File the call log
+        run: |
+          git config user.name "The Operator"
+          git config user.email "operator@thefactoryx.art"
+          git add -A
+          git diff --staged --quiet || git commit -m "📞 Call recorded"
+          git push
