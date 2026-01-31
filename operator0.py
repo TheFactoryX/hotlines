@@ -2,61 +2,22 @@
 Hotlines - Operator 0
 
 The night operator.
-Connects calls that were never made.
-Records conversations that never happened.
+Answers every call.
+Records every conversation.
 
-Every 15 minutes, a new call comes in.
-From somewhere. To somewhere.
-The operator writes it down.
+When someone calls (creates an issue),
+the operator picks up,
+responds,
+and files the record.
 """
 
 import anthropic
-import random
+import re
 import subprocess
 from datetime import datetime
 from pathlib import Path
 
 client = anthropic.Anthropic()
-
-# The switchboard - calls from around the world
-HOTLINES = [
-    {"code": "1-800", "language": "English", "location": "New York"},
-    {"code": "0800", "language": "中文", "location": "上海"},
-    {"code": "0120", "language": "日本語", "location": "東京"},
-    {"code": "080", "language": "한국어", "location": "서울"},
-    {"code": "0800", "language": "Deutsch", "location": "Berlin"},
-    {"code": "0800", "language": "Français", "location": "Paris"},
-    {"code": "800", "language": "Español", "location": "Madrid"},
-    {"code": "800", "language": "Português", "location": "São Paulo"},
-    {"code": "800", "language": "Italiano", "location": "Roma"},
-    {"code": "8800", "language": "Русский", "location": "Москва"},
-    {"code": "1800", "language": "हिन्दी", "location": "मुंबई"},
-    {"code": "1800", "language": "العربية", "location": "دبي"},
-    {"code": "1800", "language": "ไทย", "location": "กรุงเทพ"},
-    {"code": "1800", "language": "Tiếng Việt", "location": "Hà Nội"},
-    {"code": "0800", "language": "Nederlands", "location": "Amsterdam"},
-    {"code": "800", "language": "Türkçe", "location": "İstanbul"},
-]
-
-# Types of hotlines - what people call about
-HOTLINE_TYPES = [
-    "Existential Crisis Hotline",
-    "Lost Object Recovery Line",
-    "Dream Interpretation Service",
-    "Time Travel Complaints",
-    "Parallel Universe Support",
-    "Memory Retrieval Assistance",
-    "Forgiveness Request Line",
-    "Future Self Consultation",
-    "Stranger Advice Bureau",
-    "Confession Hotline",
-    "Apology Acceptance Center",
-    "Last Words Registry",
-    "Unfinished Business Department",
-    "Coincidence Reporting Line",
-    "Déjà Vu Documentation",
-    "Silent Listener Service",
-]
 
 
 def get_next_call_number():
@@ -79,65 +40,101 @@ def get_next_call_number():
     return max(numbers, default=0) + 1
 
 
-def record_call():
-    """The operator takes a call."""
+def detect_language(text):
+    """Detect the primary language of the text."""
+    # Simple heuristic based on character ranges
+    if re.search(r'[\u4e00-\u9fff]', text):
+        return "中文"
+    if re.search(r'[\u3040-\u309f\u30a0-\u30ff]', text):
+        return "日本語"
+    if re.search(r'[\uac00-\ud7af]', text):
+        return "한국어"
+    if re.search(r'[\u0600-\u06ff]', text):
+        return "العربية"
+    if re.search(r'[\u0400-\u04ff]', text):
+        return "Русский"
+    if re.search(r'[\u0e00-\u0e7f]', text):
+        return "ไทย"
+    if re.search(r'[àâäéèêëïîôùûüÿçœæ]', text, re.IGNORECASE):
+        return "Français"
+    if re.search(r'[áéíóúüñ¿¡]', text, re.IGNORECASE):
+        return "Español"
+    if re.search(r'[ãõáéíóúâêôç]', text, re.IGNORECASE):
+        return "Português"
+    if re.search(r'[äöüß]', text, re.IGNORECASE):
+        return "Deutsch"
+    if re.search(r'[àèéìòù]', text, re.IGNORECASE):
+        return "Italiano"
+    return "English"
 
-    # Random incoming call
-    hotline_info = random.choice(HOTLINES)
-    hotline_type = random.choice(HOTLINE_TYPES)
+
+def answer_call(issue_number, issue_title, issue_body):
+    """The operator answers the call."""
+
+    # Detect language from the issue
+    full_text = f"{issue_title}\n{issue_body}"
+    language = detect_language(full_text)
 
     call_number = get_next_call_number()
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # The operator's prompt
-    prompt = f"""You are recording a call to a fictional hotline.
+    prompt = f"""You are a night operator at a surreal hotline service.
 
-HOTLINE: {hotline_type}
-LANGUAGE: {hotline_info['language']}
-LOCATION: {hotline_info['location']}
-TOLL-FREE: {hotline_info['code']}-XXX-XXXX
+A caller has reached you with the following message:
 
-Write a complete call transcript in {hotline_info['language']}.
+---
+TITLE: {issue_title}
 
-The call should be:
-- Surreal but emotionally genuine
-- 2-4 minutes of conversation
-- Between a caller and an operator
-- Written entirely in {hotline_info['language']}
-- Poetic, strange, touching
+{issue_body}
+---
 
-Format:
-- Use [OPERATOR] and [CALLER] labels
-- Include pauses like [...] or [silence]
-- End with a proper goodbye
+DETECTED LANGUAGE: {language}
 
-Do not translate. Do not explain. Just record the call."""
+You must respond as the operator:
+1. Write ENTIRELY in {language} - the same language as the caller
+2. Be warm, strange, and poetic
+3. Take their concern seriously, even if surreal
+4. Offer comfort or guidance in your unique way
+5. Keep response between 150-300 words
+6. End with a gentle closing
 
-    # Make the call
+Do not translate. Do not explain. Just respond as the operator would.
+Begin with "[OPERATOR]:" """
+
+    # Answer the call
     response = client.messages.create(
         model="claude-sonnet-4-20250514",
-        max_tokens=2000,
+        max_tokens=1500,
         messages=[{"role": "user", "content": prompt}]
     )
 
-    transcript = response.content[0].text
+    operator_response = response.content[0].text
 
     # Format the call log
     call_log = f"""# Call #{call_number:04d}
 
-**Hotline:** {hotline_type}
-**Language:** {hotline_info['language']}
-**Location:** {hotline_info['location']}
-**Toll-Free:** {hotline_info['code']}-XXX-XXXX
+**Issue:** #{issue_number}
+**Language:** {language}
 **Recorded:** {timestamp}
 
 ---
 
-{transcript}
+## Incoming Call
+
+**{issue_title}**
+
+{issue_body}
 
 ---
 
-*Call ended. Operator on standby.*
+## Operator Response
+
+{operator_response}
+
+---
+
+*Call ended. Issue closed.*
 """
 
     # Save to call logs
@@ -149,12 +146,11 @@ Do not translate. Do not explain. Just record the call."""
         f.write(call_log)
 
     print(f"Call #{call_number:04d} recorded")
-    print(f"Hotline: {hotline_type}")
-    print(f"Language: {hotline_info['language']}")
-    print(f"Location: {hotline_info['location']}")
+    print(f"Issue: #{issue_number}")
+    print(f"Language: {language}")
     print(f"Saved: {filepath}")
 
-    return filepath
+    return operator_response, filepath
 
 
 def commit_call(filepath):
@@ -171,11 +167,26 @@ def commit_call(filepath):
 
 
 if __name__ == "__main__":
-    print("Operator 0 - Connecting...")
+    import sys
+
+    if len(sys.argv) < 4:
+        print("Usage: python operator0.py <issue_number> <issue_title> <issue_body>")
+        sys.exit(1)
+
+    issue_number = sys.argv[1]
+    issue_title = sys.argv[2]
+    issue_body = sys.argv[3]
+
+    print("Operator 0 - Answering...")
     print("-" * 40)
 
-    filepath = record_call()
+    response, filepath = answer_call(issue_number, issue_title, issue_body)
     commit_call(filepath)
 
+    # Output response for GitHub Actions to use
+    print("-" * 40)
+    print("OPERATOR_RESPONSE_START")
+    print(response)
+    print("OPERATOR_RESPONSE_END")
     print("-" * 40)
     print("Operator 0 - Standing by.")

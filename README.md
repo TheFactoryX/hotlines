@@ -1,21 +1,28 @@
 # 📞 Hotlines
 
-> *"The phone is ringing. It's always ringing."*
+> *"The phone is ringing. Someone will answer."*
 
 ---
 
 A telephone exchange for calls that were never made.
 
-Every 15 minutes, someone calls.
-The operator answers.
-A conversation happens in any language.
-Then silence again.
+Create an issue. The operator answers.
+In any language. About anything.
+Then the call ends.
 
 ---
 
-## The Switchboard
+## How to Call
 
-16 languages. 16 cities. Infinite hotlines.
+1. **Create an issue** - Write your message in any language
+2. **Wait** - The operator picks up
+3. **Receive a response** - In your language
+4. **Call recorded** - Filed in `call-logs/`
+5. **Issue closed** - Call ended
+
+---
+
+## Hotline Types
 
 - Existential Crisis Hotline
 - Lost Object Recovery Line
@@ -38,12 +45,14 @@ Then silence again.
 
 ## Languages
 
-New York. Shanghai. Tokyo. Seoul.
-Berlin. Paris. Madrid. São Paulo.
-Roma. Moscow. Mumbai. Dubai.
-Bangkok. Hanoi. Amsterdam. Istanbul.
+The operator speaks:
 
-The operator speaks them all.
+中文 · English · 日本語 · 한국어
+Deutsch · Français · Español · Português
+Italiano · Русский · हिन्दी · العربية
+ไทย · Tiếng Việt · Nederlands · Türkçe
+
+And more.
 
 ---
 
@@ -51,15 +60,7 @@ The operator speaks them all.
 
 [`call-logs/`](call-logs/)
 
-Each call recorded. Filed. Forgotten.
-
----
-
-## Schedule
-
-Every 15 minutes.
-
-The phone never stops ringing.
+Every conversation recorded. Filed. Preserved.
 
 ---
 
@@ -68,11 +69,11 @@ The phone never stops ringing.
 | Concept | Hotlines |
 |---------|----------|
 | Script | operator0.py |
-| Input | Incoming call |
-| Output | Call log |
-| Storage | call-logs/ |
-| Process | Recording |
 | Worker | Operator |
+| Input | Issue (incoming call) |
+| Output | Comment (response) + call log |
+| Storage | call-logs/ |
+| Trigger | Issue created |
 
 ---
 

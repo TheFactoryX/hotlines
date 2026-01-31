@@ -1,12 +1,11 @@
 name: Operator 0
 
 on:
-  schedule:
-    - cron: '*/15 * * * *'
-  workflow_dispatch:
+  issues:
+    types: [opened]
 
 jobs:
-  operate:
+  answer-call:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,17 +20,39 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Answer the call
+        id: answer
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          for i in 1 2 3; do
-            python operator0.py && break || sleep 10
-          done
+          # Run operator and capture response
+          python operator0.py "$ISSUE_NUMBER" "$ISSUE_TITLE" "$ISSUE_BODY" > output.txt 2>&1
+          cat output.txt
+
+          # Extract operator response
+          RESPONSE=$(sed -n '/OPERATOR_RESPONSE_START/,/OPERATOR_RESPONSE_END/p' output.txt | sed '1d;$d')
+
+          # Save to file for multiline output
+          echo "$RESPONSE" > response.txt
+
+      - name: Reply to issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --body-file response.txt
+
+      - name: Close the call
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue close ${{ github.event.issue.number }} --comment "📞 *Call ended. Thank you for calling.*"
 
       - name: File the call log
         run: |
           git config user.name "The Operator"
           git config user.email "operator@thefactoryx.art"
           git add -A
-          git diff --staged --quiet || git commit -m "📞 Call recorded"
+          git diff --staged --quiet || git commit -m "📞 Call #${{ github.event.issue.number }} recorded"
           git push
