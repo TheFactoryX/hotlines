@@ -27,15 +27,37 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
+          set +e  # Don't exit on error
+
+          # Debug: check if API key is set
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "ERROR: ANTHROPIC_API_KEY is not set"
+            exit 1
+          fi
+          echo "API key is set (length: ${#ANTHROPIC_API_KEY})"
+
           # Run operator and capture response
-          python operator0.py "$ISSUE_NUMBER" "$ISSUE_TITLE" "$ISSUE_BODY" > output.txt 2>&1
-          cat output.txt
+          python operator0.py "$ISSUE_NUMBER" "$ISSUE_TITLE" "$ISSUE_BODY" 2>&1 | tee output.txt
+          PYTHON_EXIT=$?
+
+          if [ $PYTHON_EXIT -ne 0 ]; then
+            echo "Python script failed with exit code $PYTHON_EXIT"
+            cat output.txt
+            exit 1
+          fi
 
           # Extract operator response
           RESPONSE=$(sed -n '/OPERATOR_RESPONSE_START/,/OPERATOR_RESPONSE_END/p' output.txt | sed '1d;$d')
 
           # Save to file for multiline output
           echo "$RESPONSE" > response.txt
+
+          # Check if response is empty
+          if [ ! -s response.txt ]; then
+            echo "ERROR: Response is empty"
+            cat output.txt
+            exit 1
+          fi
 
       - name: Reply to issue
         env:
