@@ -16,8 +16,11 @@ import re
 import subprocess
 from datetime import datetime
 from pathlib import Path
+import os
 
-client = anthropic.Anthropic()
+client = anthropic.Anthropic(
+    base_url=os.environ.get("ANTHROPIC_BASE_URL", "https://open.bigmodel.cn/api/anthropic")
+)
 
 
 def get_next_call_number():
@@ -104,7 +107,7 @@ Begin with "[OPERATOR]:" """
 
     # Answer the call
     response = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="glm-4.7",
         max_tokens=1500,
         messages=[{"role": "user", "content": prompt}]
     )
