@@ -1,5 +1,11 @@
 # 📞 Hotlines
 
+[![ANTI-LICENSE](https://img.shields.io/badge/ANTI--LICENSE-STEAL_THIS-000000?style=for-the-badge&labelColor=dc143c)](LICENSE)
+[![Machine Status](https://img.shields.io/github/actions/workflow/status/TheFactoryX/hotlines/operator0-switch.yml?style=flat-square&label=operator)](https://github.com/TheFactoryX/hotlines/actions)
+[![GitHub Stars](https://img.shields.io/github/stars/TheFactoryX/hotlines?style=flat-square&logo=github)](https://github.com/TheFactoryX/hotlines/stargazers)
+[![Last Commit](https://img.shields.io/github/last-commit/TheFactoryX/hotlines?style=flat-square)](https://github.com/TheFactoryX/hotlines/commits)
+[![TheFactoryX](https://img.shields.io/badge/TheFactoryX-black?style=flat-square&logo=github)](https://github.com/TheFactoryX)
+
 > *"The phone is ringing. Someone will answer."*
 
 ---
@@ -76,6 +82,12 @@ Every conversation recorded. Filed. Preserved.
 | Trigger | Issue created |
 
 ---
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=TheFactoryX/hotlines&type=Date)](https://star-history.com/#TheFactoryX/hotlines&Date)
 
 ---
 
